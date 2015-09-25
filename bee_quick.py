@@ -1,16 +1,22 @@
-""" Project name.
+""" Bee Quick.
 
-Description
+A simple bee race. Used to test whether it makes sense to time sports like running and swimming
+to the nearest 1/100 of a second using stopwatches.
+
+Three bees race between two lines and time for each bee is shown. One or more of the bees can be timed
+using stopwatches and that time compared to the actual time taken.
 """
 
 __copyright__ = "(c) Geoff Goldrick 2014"
 __license__ = "Creative Commons Attribution-ShareAlike 2.0 Generic License."
 __author__ = "Prof. Stick"
-__version__ = "0.1"
+__version__ = "1.0"
 __revision__ = "20150925"
 
 """ revision notes:
 0.1 set layout grid based on screen size
+1.0 ready to roll, useable by Sam
+TODO store results as tab delimited text file
 
 """
 import random as R
@@ -41,7 +47,7 @@ MAX_RATE = 3
 
 #define fonts
 big_font = P.font.SysFont("monospace",GRID_X)
-med_font = P.font.SysFont("monospace",int(GRID_X/2))
+med_font = P.font.SysFont("monospace",int(GRID_X/2),bold=True)
 small_font = P.font.SysFont("monospace",int(GRID_X/3))
 
 #much as I hate global variables, I feel lazy
@@ -93,7 +99,7 @@ class Bee(object):
 
         if not self.finish:
             if self.rectangle.collidepoint((screen_width - GRID_X,self.y)):
-                self.finish = int(round((P.time.get_ticks() - self.start),-1)/10)
+                self.finish = round((P.time.get_ticks() - self.start)/1000,2)
 
 class text(object):
     """A letter of the guess word.
@@ -139,21 +145,33 @@ def draw_track():
     '''
     # Clear the screen and set the screen background
     screen.fill(DARK_GREEN)
+    #flower_img = P.image.load('media/flowers.png')
+    #screen.blit(flower_img,[screen_width - GRID_X, 0])
 
     # Draw finish lines 5 pixels wide.
     P.draw.line(screen, GREEN, [GRID_X, 0], [GRID_X,screen_height], 5)
     P.draw.line(screen, DARK_RED, [screen_width - GRID_X, 0], [screen_width - GRID_X,screen_height], 5)
 
+def make_bees():
+    b_array = []
+    for i in range(1,4):
+        b_array.append(Bee(i))
+    return b_array
+
+
+def display_message(msg, col=DARK_RED,fnt=med_font):
+    msg_text = text(msg,colour=col,font=fnt)
+    msg_text.position = [(screen_width - msg_text.image.get_width())/2,0]
+    screen.blit(msg_text.image,msg_text.position)
+
 def display_splash():
-    return 'start'
+    display_message('press anywhere to start, esc to quit')
 
 def start_race(start_time,count_array):
     status = 'start'
 
-    print('start time: {}'.format(start_time))
     time_elapsed = P.time.get_ticks() - start_time
     count = time_elapsed//1000
-    print(count)
 
     if count > 4:
         status = 'race'
@@ -166,16 +184,14 @@ def start_race(start_time,count_array):
         num.position = (((screen_width - num.image.get_width())/2),GRID_Y*3)
         screen.blit(num.image,num.position)
 
-
-
     return status
 
 def run_race(b_array):
     status = 'done'
-
-    banner = text('GO YOU GOOD BEES!',font=med_font)
-    banner.position = ((screen_width - banner.image.get_width())/2,0)
-    screen.blit(banner.image,banner.position)
+    display_message('GO YOU GOOD BEES!')
+    #banner = text('GO YOU GOOD BEES!',font=med_font)
+    #banner.position = [(screen_width - banner.image.get_width())/2,0]
+    #screen.blit(banner.image,banner.position)
 
     for bee in b_array:
         bee.update()
@@ -183,18 +199,23 @@ def run_race(b_array):
     return status
 
 def display_finish(b_array):
-    for b in b_array:
-        print('Bee {} started {} finished in {}:{}'.format(b.id,b.start,b.finish//100,str(b.finish%100).zfill(2)))
+    display_message('press anywhere to restart, esc to quit')
 
+
+    for b in b_array:
+        time_actual = text('{0:.2f}'.format(b.finish)) #this format ensures trailing zeros are printed
+        time_actual.position = [13*GRID_X,b.y]
+        screen.blit(time_actual.image,time_actual.position)
+
+    return 'done'
 
 
 def main():
     race_started = False
 
     #make the bees
-    bee_array = []
-    for i in range(1,4):
-        bee_array.append(Bee(i))
+    bee_array = make_bees()
+
 
     countdown_array = []
     for i in range(0,5):
@@ -215,15 +236,25 @@ def main():
 
         if event.type == P.QUIT: #player clicked close so quit
             play = False
+
         elif event.type == P.KEYDOWN:
             if event.key == P.K_ESCAPE:
                 play = False
+
+        elif event.type == P.MOUSEBUTTONDOWN:
+            if state == 'splash':
+                state = 'start'
+            if state == 'done':
+                bee_array = make_bees()
+                race_started = False
+                state = 'start'
+
 
         #draw the track
         draw_track()
 
         if state == 'splash':
-            state = display_splash()
+            display_splash()
 
         elif state == 'start':
             if not race_started: race_started = P.time.get_ticks()
