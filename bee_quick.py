@@ -28,18 +28,20 @@ GRID_X = int(screen_width/16)
 GRID_Y = int(screen_height/9)
 
 # Define the colors we will use in RGB format
-BLACK = (  0,   0,   0)
-WHITE = (255, 255, 255)
-BLUE =  (  0,   0, 255)
-GREEN = (  0, 255,   0)
-RED =   (255,   0,   0)
+BLACK = [0,0,0]
+WHITE = [255,255,255]
+BLUE =  [0,0,255]
+GREEN = [0,255,0]
+DARK_GREEN = [0,128,0]
+RED =   [255,0,0]
+DARK_RED = [128,0,0]
 
 #define max rate of movement
 MAX_RATE = 3
 
 #define fonts
 big_font = P.font.SysFont("monospace",GRID_X)
-font = P.font.SysFont("monospace",int(GRID_X/2))
+med_font = P.font.SysFont("monospace",int(GRID_X/2))
 small_font = P.font.SysFont("monospace",int(GRID_X/3))
 
 #much as I hate global variables, I feel lazy
@@ -93,7 +95,7 @@ class Bee(object):
             if self.rectangle.collidepoint((screen_width - GRID_X,self.y)):
                 self.finish = int(round((P.time.get_ticks() - self.start),-1)/10)
 
-class letter(object):
+class text(object):
     """A letter of the guess word.
 
     holds all the details of a letter including its position on the screen
@@ -106,7 +108,7 @@ class letter(object):
         selected: a boolean indicating whether the letter has been selected
     """
 
-    def __init__(self, alpha, colour=RED):
+    def __init__(self, alpha, colour=RED, font=med_font, pos=[0,0]):
         """Inits letter.
 
         arguments:
@@ -116,16 +118,17 @@ class letter(object):
         """
         self.alpha = alpha
         self.image = font.render(alpha,True,colour)
-        self.position = [0,0]
+        self.position = pos
         self.selected = False
         self.rect = P.Rect(self.position,self.image.get_size())
+        self.font = font
 
     def update(self):
         """updates the status and rect of the letter when the parameters change."""
         if self.selected:
-            self.image = font.render(self.alpha,True,DARK_RED)
+            self.image = self.font.render(self.alpha,True,DARK_RED)
         else:
-            self.image = font.render(self.alpha,True,RED)
+            self.image = self.font.render(self.alpha,True,RED)
 
         self.rect = P.Rect(self.position,self.image.get_size())
 
@@ -135,11 +138,11 @@ def draw_track():
     ''' Draws the race track
     '''
     # Clear the screen and set the screen background
-    screen.fill(BLUE)
+    screen.fill(DARK_GREEN)
 
     # Draw finish lines 5 pixels wide.
     P.draw.line(screen, GREEN, [GRID_X, 0], [GRID_X,screen_height], 5)
-    P.draw.line(screen, GREEN, [screen_width - GRID_X, 0], [screen_width - GRID_X,screen_height], 5)
+    P.draw.line(screen, DARK_RED, [screen_width - GRID_X, 0], [screen_width - GRID_X,screen_height], 5)
 
 def display_splash():
     return 'start'
@@ -154,11 +157,26 @@ def start_race(start_time,count_array):
 
     if count > 4:
         status = 'race'
-    else: screen.blit(count_array[count].image,(GRID_X*8,0))
+    else:
+        banner = text('Race Starts in',font=big_font)
+        banner.position = ((screen_width - banner.image.get_width())/2,GRID_Y)
+        screen.blit(banner.image,banner.position)
+
+        num = count_array[count]
+        num.position = (((screen_width - num.image.get_width())/2),GRID_Y*3)
+        screen.blit(num.image,num.position)
+
+
+
     return status
 
 def run_race(b_array):
     status = 'done'
+
+    banner = text('GO YOU GOOD BEES!',font=med_font)
+    banner.position = ((screen_width - banner.image.get_width())/2,0)
+    screen.blit(banner.image,banner.position)
+
     for bee in b_array:
         bee.update()
         if not bee.home: status = 'race'
@@ -180,7 +198,7 @@ def main():
 
     countdown_array = []
     for i in range(0,5):
-        countdown_array.append(letter(str(5-i)))
+        countdown_array.append(text(str(5-i),font=big_font))
 
     #Loop until the user clicks the close button.
     play = True
