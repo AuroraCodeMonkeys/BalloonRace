@@ -7,7 +7,7 @@ Three bees race between two lines and time for each bee is shown. One or more of
 using stopwatches and that time compared to the actual time taken.
 """
 
-__copyright__ = "(c) Geoff Goldrick 2014"
+__copyright__ = "(c) Geoff Goldrick 2015"
 __license__ = "Creative Commons Attribution-ShareAlike 2.0 Generic License."
 __author__ = "Prof. Stick"
 __version__ = "1.0"
